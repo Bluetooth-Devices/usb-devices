@@ -1,0 +1,20 @@
+# Changes here will be overwritten by Copier
+_commit: d87ac4b
+_src_path: gh:browniebroke/pypackage-template
+add_me_as_contributor: false
+copyright_year: '2022'
+documentation: true
+email: nick@koston.org
+full_name: J. Nick Koston
+github_username: bluetooth-devices
+initial_commit: true
+open_source_license: MIT
+package_name: usb_devices
+project_name: USB Devices
+project_short_description: usb_devices
+project_slug: usb-devices
+run_poetry_install: true
+setup_github: true
+setup_pre_commit: true
+version: 0.0.1
+
