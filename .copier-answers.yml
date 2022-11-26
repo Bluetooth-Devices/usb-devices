@@ -2,7 +2,7 @@
 _commit: d87ac4b
 _src_path: gh:browniebroke/pypackage-template
 add_me_as_contributor: false
-copyright_year: '2022'
+copyright_year: "2022"
 documentation: true
 email: nick@koston.org
 full_name: J. Nick Koston
@@ -17,4 +17,3 @@ run_poetry_install: true
 setup_github: true
 setup_pre_commit: true
 version: 0.0.1
-
