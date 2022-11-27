@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.0 (2022-11-27)
+### Feature
+* Add a trivial test ([#6](https://github.com/Bluetooth-Devices/usb-devices/issues/6)) ([`3520480`](https://github.com/Bluetooth-Devices/usb-devices/commit/3520480a1ab2f05051057b8f0258457edc8998ca))
+
 ## v0.1.0 (2022-11-27)
 ### Feature
 * Add first version ([#5](https://github.com/Bluetooth-Devices/usb-devices/issues/5)) ([`e34423e`](https://github.com/Bluetooth-Devices/usb-devices/commit/e34423ece309ce492bee74dff8154835bd0e6378))
