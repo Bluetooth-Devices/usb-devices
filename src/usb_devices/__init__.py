@@ -12,9 +12,15 @@ USB_DEVFS_PATH = Path("/dev/bus/usb")
 # _IO('U', 20) constant in the linux kernel.
 USBDEVFS_RESET = ord("U") << (4 * 2) | 20
 
+
+class NotAUSBDeviceError(ValueError):
+    """Raised when a device is not a USB device."""
+
+
 __all__ = [
     "USBDevice",
     "BluetoothDevice",
+    "NotAUSBDeviceError",
 ]
 
 
@@ -77,6 +83,8 @@ class USBDevice:
 
     def __init__(self, id_str: str) -> None:
         """Initialize a USBDevice object."""
+        if ":" not in id_str or "-" not in id_str:
+            raise NotAUSBDeviceError(f"{id_str} is not a USB device")
         self.id_str = id_str  # 1-1.2.2:1.0
         bus_port_id, interface_id = id_str.split(":")
         self.bus_port_id = bus_port_id
