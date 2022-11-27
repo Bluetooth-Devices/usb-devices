@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from usb_devices import BluetoothDevice
+from usb_devices import BluetoothDevice, NotAUSBDeviceError
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("usb_devices").setLevel(logging.DEBUG)
@@ -13,6 +13,9 @@ async def run() -> None:
         dev = BluetoothDevice(i)
         try:
             await loop.run_in_executor(None, dev.setup)
+        except NotAUSBDeviceError:
+            print(f"hci{i} is not a USB device")
+            continue
         except FileNotFoundError:
             print(f"hci{i} not found")
             continue

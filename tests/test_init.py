@@ -1,4 +1,6 @@
-from usb_devices import BluetoothDevice, USBDevice
+import pytest
+
+from usb_devices import BluetoothDevice, NotAUSBDeviceError, USBDevice
 
 
 def test_bluetooth_device():
@@ -8,3 +10,5 @@ def test_bluetooth_device():
 
 def test_usb_device():
     assert USBDevice("1-1.2.2:1.0")
+    with pytest.raises(NotAUSBDeviceError):
+        USBDevice("ttyAMA0")
