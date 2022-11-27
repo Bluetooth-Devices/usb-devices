@@ -41,7 +41,7 @@ Install this via pip (or your favourite package manager):
 ## Usage
 
 ```
-# python3 examples/info.py 
+# python3 examples/info.py
 hci0 manufacturer: Realtek, product: Bluetooth 5.1 Radio, vendor_id: 0bda, product_id: a725, bus_id: 1, dev_num: 11
 hci1 manufacturer: Realtek, product: Bluetooth Radio, vendor_id: 2550, product_id: 8761, bus_id: 1, dev_num: 8
 hci2 manufacturer: Realtek, product: Bluetooth Radio, vendor_id: 2550, product_id: 8761, bus_id: 1, dev_num: 7
@@ -51,7 +51,7 @@ hci5 not found
 hci6 not found
 hci7 not found
 hci8 not found
-# python3 examples/reset.py 
+# python3 examples/reset.py
 Reset of hci0 succeeded
 ```
 
