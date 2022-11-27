@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.0 (2022-11-27)
+### Feature
+* Add example to readme ([`17015a8`](https://github.com/Bluetooth-Devices/usb-devices/commit/17015a877e0474b5ed9e5e95b91db909c736948b))
+
+### Fix
+* Tidy readme ([#7](https://github.com/Bluetooth-Devices/usb-devices/issues/7)) ([`1e16889`](https://github.com/Bluetooth-Devices/usb-devices/commit/1e1688992add590388d4258a578225b1f4925cf8))
+
 ## v0.2.0 (2022-11-27)
 ### Feature
 * Add a trivial test ([#6](https://github.com/Bluetooth-Devices/usb-devices/issues/6)) ([`3520480`](https://github.com/Bluetooth-Devices/usb-devices/commit/3520480a1ab2f05051057b8f0258457edc8998ca))
