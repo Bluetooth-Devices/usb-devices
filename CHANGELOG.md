@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.4.0 (2022-11-27)
+### Feature
+* Add not usb error ([#8](https://github.com/Bluetooth-Devices/usb-devices/issues/8)) ([`d778dc4`](https://github.com/Bluetooth-Devices/usb-devices/commit/d778dc481a5c77aaa316f9682296a5265cd9d1f5))
+
 ## v0.3.0 (2022-11-27)
 ### Feature
 * Add example to readme ([`17015a8`](https://github.com/Bluetooth-Devices/usb-devices/commit/17015a877e0474b5ed9e5e95b91db909c736948b))
