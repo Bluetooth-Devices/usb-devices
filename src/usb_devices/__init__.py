@@ -111,7 +111,13 @@ class USBDevice:
     def setup(self) -> None:
         """Read the USB device."""
         for key, value in self._files.items():
-            setattr(self, key, self.path.joinpath(value).read_text().strip())
+            try:
+                setattr(self, key, self.path.joinpath(value).read_text().strip())
+            except FileNotFoundError:
+                if key not in ("manufacturer", "product"):
+                    raise
+        self.product = self.product or self.product_id
+        self.manufacturer = self.manufacturer or self.vendor_id
         assert self.dev_num is not None  # nosec
         self.usb_devfs_path = (
             USB_DEVFS_PATH / f"{int(self.bus_id):03}" / f"{int(self.dev_num):03}"
