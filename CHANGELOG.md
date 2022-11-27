@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.4.1 (2022-11-27)
+### Fix
+* Handle manufacturer and product files missing ([#9](https://github.com/Bluetooth-Devices/usb-devices/issues/9)) ([`9c98038`](https://github.com/Bluetooth-Devices/usb-devices/commit/9c9803833448aa29d97427d3296d327d15510c2e))
+
 ## v0.4.0 (2022-11-27)
 ### Feature
 * Add not usb error ([#8](https://github.com/Bluetooth-Devices/usb-devices/issues/8)) ([`d778dc4`](https://github.com/Bluetooth-Devices/usb-devices/commit/d778dc481a5c77aaa316f9682296a5265cd9d1f5))
