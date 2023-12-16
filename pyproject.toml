@@ -38,10 +38,26 @@ sphinx = ">=4.0"
 sphinx-rtd-theme = ">=1.0"
 
 [tool.semantic_release]
-branch = "main"
-version_toml = "pyproject.toml:tool.poetry.version"
-version_variable = "src/usb_devices/__init__.py:__version__"
-build_command = "pip install poetry && poetry build"
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = [
+    "src/usb_devices/__init__.py:__version__",
+]
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = [
+    "chore*",
+    "ci*",
+]
+
+[tool.semantic_release.changelog.environment]
+keep_trailing_newline = true
+
+[tool.semantic_release.branches.main]
+match = "main"
+
+[tool.semantic_release.branches.noop]
+match = "(?!main$)"
+prerelease = true
 
 [tool.pytest.ini_options]
 addopts = "-v -Wdefault --cov=usb_devices --cov-report=term-missing:skip-covered"
