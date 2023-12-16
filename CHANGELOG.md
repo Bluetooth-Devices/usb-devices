@@ -2,6 +2,13 @@
 
 
 
+## v0.4.3 (2023-12-16)
+
+### Fix
+
+* fix: switch to trusted publishing (#14) ([`8fdbef1`](https://github.com/Bluetooth-Devices/usb-devices/commit/8fdbef14fafe26193283f3593ff79642407b0d85))
+
+
 ## v0.4.2 (2023-12-16)
 
 ### Fix
