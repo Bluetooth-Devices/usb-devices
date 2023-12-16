@@ -126,7 +126,7 @@ class USBDevice:
         assert self.dev_num is not None  # nosec
         self.usb_devfs_path = (
             USB_DEVFS_PATH
-            / f"{int(self.bus_id):03}"
+            / f"{int(self.bus_id):03}"  # noqa
             / f"{int(self.dev_num):03}"  # noqa
         )
 
