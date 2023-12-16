@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "usb-devices"
-version = "0.4.1"
+version = "0.4.2"
 description = "Tools for mapping, describing, and resetting USB devices"
 authors = ["J. Nick Koston <nick@koston.org>"]
 license = "MIT"
