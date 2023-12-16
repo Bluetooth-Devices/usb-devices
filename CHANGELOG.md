@@ -2,6 +2,13 @@
 
 
 
+## v0.4.4 (2023-12-16)
+
+### Fix
+
+* fix: remove unused workflows (#15) ([`21946e5`](https://github.com/Bluetooth-Devices/usb-devices/commit/21946e5c9077bc32c943550e80c188f58a3c91d3))
+
+
 ## v0.4.3 (2023-12-16)
 
 ### Fix
