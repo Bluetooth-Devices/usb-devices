@@ -3,7 +3,12 @@ from __future__ import annotations
 __version__ = "0.4.1"
 
 import asyncio
-from fcntl import ioctl
+
+try:
+    from fcntl import ioctl
+except ImportError:
+    ioctl = None  # type: ignore
+
 from pathlib import Path
 
 BLUETOOTH_DEVICE_PATH = Path("/sys/class/bluetooth")
@@ -125,6 +130,8 @@ class USBDevice:
 
     def reset(self) -> bool:
         """Reset the USB device."""
+        if ioctl is None:
+            return False  # type: ignore
         if self.usb_devfs_path is None:
             self.setup()
         assert self.usb_devfs_path is not None  # nosec
