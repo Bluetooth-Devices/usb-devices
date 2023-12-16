@@ -2,6 +2,13 @@
 
 
 
+## v0.4.5 (2023-12-16)
+
+### Fix
+
+* fix: missing build command in pyproject.toml (#16) ([`4f47c47`](https://github.com/Bluetooth-Devices/usb-devices/commit/4f47c47bb3330f013599997843c5001a4ee2c719))
+
+
 ## v0.4.4 (2023-12-16)
 
 ### Fix
