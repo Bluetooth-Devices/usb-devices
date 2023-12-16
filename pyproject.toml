@@ -42,6 +42,7 @@ version_toml = ["pyproject.toml:tool.poetry.version"]
 version_variables = [
     "src/usb_devices/__init__.py:__version__",
 ]
+build_command = "pip install poetry && poetry build"
 
 [tool.semantic_release.changelog]
 exclude_commit_patterns = [
