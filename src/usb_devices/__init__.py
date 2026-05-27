@@ -3,6 +3,7 @@ from __future__ import annotations
 __version__ = "0.5.0"
 
 import asyncio
+import logging
 
 try:
     from fcntl import ioctl
@@ -10,6 +11,8 @@ except ImportError:
     ioctl = None  # type: ignore
 
 from pathlib import Path
+
+_LOGGER = logging.getLogger(__name__)
 
 BLUETOOTH_DEVICE_PATH = Path("/sys/class/bluetooth")
 USB_DEVICE_PATH = Path("/sys/bus/usb/devices")
@@ -49,9 +52,24 @@ class BluetoothDevice:
         return await asyncio.get_running_loop().run_in_executor(None, self.reset)
 
     def reset(self) -> bool:
-        """Reset a Bluetooth device."""
+        """Reset a Bluetooth device.
+
+        Returns ``True`` on success, ``False`` if the underlying USB reset
+        could not be performed (device gone, permission denied, ioctl
+        failure, missing sysfs metadata). Errors are logged at DEBUG;
+        this method does not raise on transient I/O conditions so callers
+        can use the return value to drive recovery logic.
+        """
         if self.usb_device is None:
-            self.setup()
+            try:
+                self.setup()
+            except OSError as err:
+                _LOGGER.debug(
+                    "BluetoothDevice(hci%s) setup failed during reset: %s",
+                    self.hci,
+                    err,
+                )
+                return False
         assert self.usb_device is not None  # nosec
         return self.usb_device.reset()
 
@@ -131,11 +149,34 @@ class USBDevice:
         )
 
     def reset(self) -> bool:
-        """Reset the USB device."""
+        """Reset the USB device.
+
+        Returns ``True`` if the USBDEVFS_RESET ioctl succeeded, ``False``
+        otherwise. Failure modes include: ``fcntl`` unavailable (non-Linux),
+        device unplugged between setup and reset (FileNotFoundError),
+        insufficient permissions on ``/dev/bus/usb`` (PermissionError),
+        and ioctl errors from the kernel (e.g. ENODEV, EBUSY). All such
+        errors are logged at DEBUG and converted to ``False`` so callers
+        can rely on the bool contract.
+        """
         if ioctl is None:
             return False  # type: ignore
         if self.usb_devfs_path is None:
-            self.setup()
+            try:
+                self.setup()
+            except OSError as err:
+                _LOGGER.debug(
+                    "USBDevice(%s) setup failed during reset: %s",
+                    self.id_str,
+                    err,
+                )
+                return False
         assert self.usb_devfs_path is not None  # nosec
-        with self.usb_devfs_path.open("w") as usb_dev:
-            return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+        try:
+            with self.usb_devfs_path.open("w") as usb_dev:
+                return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+        except OSError as err:
+            _LOGGER.debug(
+                "USBDevice(%s) reset ioctl failed: %s", self.id_str, err
+            )
+            return False

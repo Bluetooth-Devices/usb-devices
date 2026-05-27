@@ -149,6 +149,60 @@ def test_usb_device_reset_calls_setup_when_needed(
     assert dev.usb_devfs_path is not None
 
 
+def test_usb_device_reset_returns_false_on_ioctl_oserror(
+    tmp_path: Path,
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "usbdev"
+    dev.usb_devfs_path.write_text("")
+
+    def _raise_enodev(*_args: object, **_kwargs: object) -> int:
+        raise OSError(19, "No such device")
+
+    with patch.object(usb_devices, "ioctl", _raise_enodev):
+        assert dev.reset() is False
+
+
+def test_usb_device_reset_returns_false_when_devfs_missing(
+    tmp_path: Path,
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "missing" / "usbdev"
+    with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
+        assert dev.reset() is False
+
+
+def test_usb_device_reset_returns_false_when_devfs_unreadable(
+    tmp_path: Path,
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "usbdev"
+    dev.usb_devfs_path.write_text("")
+
+    real_open = Path.open
+
+    def _deny_open(self: Path, *args: object, **kwargs: object) -> object:
+        if self == dev.usb_devfs_path:
+            raise PermissionError(13, "Permission denied")
+        return real_open(self, *args, **kwargs)  # type: ignore[arg-type]
+
+    with patch.object(Path, "open", _deny_open), patch.object(
+        usb_devices, "ioctl", lambda *a, **k: 0
+    ):
+        assert dev.reset() is False
+
+
+def test_usb_device_reset_returns_false_when_setup_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(usb_devices, "USB_DEVFS_PATH", tmp_path / "devfs")
+    # sysfs dir does NOT exist — setup() will raise FileNotFoundError
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.path = tmp_path / "does-not-exist"
+    with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
+        assert dev.reset() is False
+
+
 def test_usb_device_async_setup(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
@@ -222,6 +276,34 @@ def test_bluetooth_device_reset_calls_setup_when_needed(
     with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
         assert dev.reset() is True
     assert dev.usb_device is not None
+
+
+@requires_symlinks
+def test_bluetooth_device_reset_returns_false_when_setup_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # device_path symlink dangles — readlink succeeds but USBDevice.setup
+    # cannot find sysfs entries. Target name still parses as USB id.
+    bt_path = tmp_path / "bluetooth"
+    (bt_path / "hci0").mkdir(parents=True)
+    (bt_path / "hci0" / "device").symlink_to(tmp_path / "1-1.2.2:1.0")
+    monkeypatch.setattr(usb_devices, "USB_DEVICE_PATH", tmp_path)
+    dev = BluetoothDevice(0)
+    dev.path = bt_path / "hci0"
+    dev.device_path = dev.path / "device"
+    assert dev.reset() is False
+
+
+def test_bluetooth_device_reset_returns_false_when_readlink_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # device_path does not exist at all — readlink raises FileNotFoundError.
+    bt_path = tmp_path / "bluetooth"
+    (bt_path / "hci0").mkdir(parents=True)
+    dev = BluetoothDevice(0)
+    dev.path = bt_path / "hci0"
+    dev.device_path = dev.path / "device"
+    assert dev.reset() is False
 
 
 @requires_symlinks
