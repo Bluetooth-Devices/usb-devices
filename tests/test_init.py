@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -16,18 +17,18 @@ requires_symlinks = pytest.mark.skipif(
 )
 
 
-def test_bluetooth_device():
+def test_bluetooth_device() -> None:
     assert BluetoothDevice(0)
     assert BluetoothDevice(1)
 
 
-def test_usb_device():
+def test_usb_device() -> None:
     assert USBDevice("1-1.2.2:1.0")
     with pytest.raises(NotAUSBDeviceError):
         USBDevice("ttyAMA0")
 
 
-def test_usb_device_parses_id_str():
+def test_usb_device_parses_id_str() -> None:
     dev = USBDevice("1-1.2.2:1.0")
     assert dev.id_str == "1-1.2.2:1.0"
     assert dev.bus_port_id == "1-1.2.2"
@@ -39,7 +40,7 @@ def test_usb_device_parses_id_str():
     assert dev.usb_devfs_path is None
 
 
-def test_usb_device_rejects_non_usb_id():
+def test_usb_device_rejects_non_usb_id() -> None:
     with pytest.raises(NotAUSBDeviceError):
         USBDevice("ttyAMA0")
     with pytest.raises(NotAUSBDeviceError):
@@ -48,7 +49,9 @@ def test_usb_device_rejects_non_usb_id():
         USBDevice("1:1.0")  # no dash
 
 
-def _write_usb_sysfs(tmp_path, bus_port_id, files):
+def _write_usb_sysfs(
+    tmp_path: Path, bus_port_id: str, files: dict[str, str]
+) -> Path:
     dev_dir = tmp_path / bus_port_id
     dev_dir.mkdir(parents=True)
     for name, value in files.items():
@@ -56,7 +59,7 @@ def _write_usb_sysfs(tmp_path, bus_port_id, files):
     return dev_dir
 
 
-def test_usb_device_setup_reads_sysfs(tmp_path):
+def test_usb_device_setup_reads_sysfs(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
         "1-1.2.2",
@@ -80,7 +83,7 @@ def test_usb_device_setup_reads_sysfs(tmp_path):
     assert dev.usb_devfs_path.parts[-2:] == ("001", "011")
 
 
-def test_usb_device_setup_missing_manufacturer_falls_back(tmp_path):
+def test_usb_device_setup_missing_manufacturer_falls_back(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
         "1-1.2.2",
@@ -97,7 +100,7 @@ def test_usb_device_setup_missing_manufacturer_falls_back(tmp_path):
     assert dev.product == "a725"
 
 
-def test_usb_device_setup_missing_required_file_raises(tmp_path):
+def test_usb_device_setup_missing_required_file_raises(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
         "1-1.2.2",
@@ -109,7 +112,9 @@ def test_usb_device_setup_missing_required_file_raises(tmp_path):
         dev.setup()
 
 
-def test_usb_device_reset_returns_false_when_ioctl_unavailable(tmp_path):
+def test_usb_device_reset_returns_false_when_ioctl_unavailable(
+    tmp_path: Path,
+) -> None:
     dev = USBDevice("1-1.2.2:1.0")
     dev.usb_devfs_path = tmp_path / "usbdev"
     dev.usb_devfs_path.write_text("")
@@ -117,7 +122,7 @@ def test_usb_device_reset_returns_false_when_ioctl_unavailable(tmp_path):
         assert dev.reset() is False
 
 
-def test_usb_device_reset_calls_ioctl(tmp_path):
+def test_usb_device_reset_calls_ioctl(tmp_path: Path) -> None:
     dev = USBDevice("1-1.2.2:1.0")
     dev.usb_devfs_path = tmp_path / "usbdev"
     dev.usb_devfs_path.write_text("")
@@ -127,7 +132,9 @@ def test_usb_device_reset_calls_ioctl(tmp_path):
         assert dev.reset() is False
 
 
-def test_usb_device_reset_calls_setup_when_needed(tmp_path, monkeypatch):
+def test_usb_device_reset_calls_setup_when_needed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(usb_devices, "USB_DEVFS_PATH", tmp_path / "devfs")
     _write_usb_sysfs(
         tmp_path,
@@ -144,7 +151,7 @@ def test_usb_device_reset_calls_setup_when_needed(tmp_path, monkeypatch):
     assert dev.usb_devfs_path is not None
 
 
-def test_usb_device_async_setup(tmp_path):
+def test_usb_device_async_setup(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
         "1-1.2.2",
@@ -156,7 +163,7 @@ def test_usb_device_async_setup(tmp_path):
     assert dev.product_id == "a725"
 
 
-def test_usb_device_async_reset(tmp_path):
+def test_usb_device_async_reset(tmp_path: Path) -> None:
     dev = USBDevice("1-1.2.2:1.0")
     dev.usb_devfs_path = tmp_path / "usbdev"
     dev.usb_devfs_path.write_text("")
@@ -164,7 +171,7 @@ def test_usb_device_async_reset(tmp_path):
         assert asyncio.run(dev.async_reset()) is True
 
 
-def test_bluetooth_device_init_paths():
+def test_bluetooth_device_init_paths() -> None:
     dev = BluetoothDevice(3)
     assert dev.hci == 3
     assert dev.path.name == "hci3"
@@ -172,7 +179,9 @@ def test_bluetooth_device_init_paths():
     assert dev.usb_device is None
 
 
-def _build_bt_tree(tmp_path, monkeypatch):
+def _build_bt_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, Path]:
     bt_path = tmp_path / "bluetooth"
     usb_path = tmp_path / "usb"
     (bt_path / "hci0").mkdir(parents=True)
@@ -188,7 +197,9 @@ def _build_bt_tree(tmp_path, monkeypatch):
 
 
 @requires_symlinks
-def test_bluetooth_device_setup(tmp_path, monkeypatch):
+def test_bluetooth_device_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
     dev = BluetoothDevice(0)
     dev.path = bt_path / "hci0"
@@ -199,7 +210,9 @@ def test_bluetooth_device_setup(tmp_path, monkeypatch):
 
 
 @requires_symlinks
-def test_bluetooth_device_reset_calls_setup_when_needed(tmp_path, monkeypatch):
+def test_bluetooth_device_reset_calls_setup_when_needed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
     devfs = tmp_path / "devfs" / "001"
     devfs.mkdir(parents=True)
@@ -214,7 +227,9 @@ def test_bluetooth_device_reset_calls_setup_when_needed(tmp_path, monkeypatch):
 
 
 @requires_symlinks
-def test_bluetooth_device_async_setup(tmp_path, monkeypatch):
+def test_bluetooth_device_async_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
     dev = BluetoothDevice(0)
     dev.path = bt_path / "hci0"
@@ -224,7 +239,9 @@ def test_bluetooth_device_async_setup(tmp_path, monkeypatch):
 
 
 @requires_symlinks
-def test_bluetooth_device_async_reset(tmp_path, monkeypatch):
+def test_bluetooth_device_async_reset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
     devfs = tmp_path / "devfs" / "001"
     devfs.mkdir(parents=True)
