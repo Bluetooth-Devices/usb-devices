@@ -3,6 +3,7 @@ from __future__ import annotations
 __version__ = "0.5.0"
 
 import asyncio
+import logging
 
 try:
     from fcntl import ioctl
@@ -10,6 +11,8 @@ except ImportError:
     ioctl = None  # type: ignore
 
 from pathlib import Path
+
+_LOGGER = logging.getLogger(__name__)
 
 BLUETOOTH_DEVICE_PATH = Path("/sys/class/bluetooth")
 USB_DEVICE_PATH = Path("/sys/bus/usb/devices")
@@ -58,7 +61,9 @@ class BluetoothDevice:
     def setup(self) -> None:
         """Create a USBDevice object."""
         path = self.device_path.readlink()
-        self.usb_device = USBDevice(path.parts[-1])
+        id_str = path.parts[-1]
+        _LOGGER.debug("hci%s resolved to USB interface %s", self.hci, id_str)
+        self.usb_device = USBDevice(id_str)
         self.usb_device.setup()
 
 
@@ -115,6 +120,7 @@ class USBDevice:
 
     def setup(self) -> None:
         """Read the USB device."""
+        _LOGGER.debug("Reading sysfs attributes for %s at %s", self.id_str, self.path)
         for key, value in self._files.items():
             try:
                 setattr(self, key, self.path.joinpath(value).read_text().strip())
@@ -129,13 +135,28 @@ class USBDevice:
             / f"{int(self.bus_id):03}"  # noqa
             / f"{int(self.dev_num):03}"  # noqa
         )
+        _LOGGER.debug(
+            "USBDevice %s: manufacturer=%r product=%r vendor_id=%s product_id=%s "
+            "dev_num=%s devfs=%s",
+            self.id_str,
+            self.manufacturer,
+            self.product,
+            self.vendor_id,
+            self.product_id,
+            self.dev_num,
+            self.usb_devfs_path,
+        )
 
     def reset(self) -> bool:
         """Reset the USB device."""
         if ioctl is None:
+            _LOGGER.debug("Cannot reset %s: ioctl unavailable on this platform", self.id_str)
             return False  # type: ignore
         if self.usb_devfs_path is None:
             self.setup()
         assert self.usb_devfs_path is not None  # nosec
+        _LOGGER.debug("Resetting %s via %s", self.id_str, self.usb_devfs_path)
         with self.usb_devfs_path.open("w") as usb_dev:
-            return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+            ok = ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+        _LOGGER.debug("Reset of %s %s", self.id_str, "succeeded" if ok else "failed")
+        return ok

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -250,3 +251,89 @@ def test_bluetooth_device_async_reset(
     dev.device_path = dev.path / "device"
     with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
         assert asyncio.run(dev.async_reset()) is True
+
+
+def test_usb_device_setup_emits_debug_logs(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    _write_usb_sysfs(
+        tmp_path,
+        "1-1.2.2",
+        {
+            "manufacturer": "Realtek",
+            "product": "Bluetooth 5.1 Radio",
+            "idProduct": "a725",
+            "idVendor": "0bda",
+            "devnum": "11",
+        },
+    )
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.path = tmp_path / "1-1.2.2"
+    with caplog.at_level(logging.DEBUG, logger="usb_devices"):
+        dev.setup()
+    messages = [r.getMessage() for r in caplog.records]
+    assert any("Reading sysfs attributes for 1-1.2.2:1.0" in m for m in messages)
+    assert any("manufacturer='Realtek'" in m for m in messages)
+    assert any("dev_num=11" in m for m in messages)
+
+
+def test_usb_device_reset_emits_debug_logs(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "usbdev"
+    dev.usb_devfs_path.write_text("")
+    with (
+        caplog.at_level(logging.DEBUG, logger="usb_devices"),
+        patch.object(usb_devices, "ioctl", lambda *a, **k: 0),
+    ):
+        assert dev.reset() is True
+    messages = [r.getMessage() for r in caplog.records]
+    assert any("Resetting 1-1.2.2:1.0" in m for m in messages)
+    assert any("succeeded" in m for m in messages)
+
+
+def test_usb_device_reset_logs_failure(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "usbdev"
+    dev.usb_devfs_path.write_text("")
+    with (
+        caplog.at_level(logging.DEBUG, logger="usb_devices"),
+        patch.object(usb_devices, "ioctl", lambda *a, **k: -1),
+    ):
+        assert dev.reset() is False
+    assert any("failed" in r.getMessage() for r in caplog.records)
+
+
+def test_usb_device_reset_logs_when_ioctl_unavailable(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.usb_devfs_path = tmp_path / "usbdev"
+    dev.usb_devfs_path.write_text("")
+    with (
+        caplog.at_level(logging.DEBUG, logger="usb_devices"),
+        patch.object(usb_devices, "ioctl", None),
+    ):
+        assert dev.reset() is False
+    assert any("ioctl unavailable" in r.getMessage() for r in caplog.records)
+
+
+@requires_symlinks
+def test_bluetooth_device_setup_logs_resolution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
+    dev = BluetoothDevice(0)
+    dev.path = bt_path / "hci0"
+    dev.device_path = dev.path / "device"
+    with caplog.at_level(logging.DEBUG, logger="usb_devices"):
+        dev.setup()
+    assert any(
+        "hci0 resolved to USB interface 1-1.2.2:1.0" in r.getMessage()
+        for r in caplog.records
+    )
