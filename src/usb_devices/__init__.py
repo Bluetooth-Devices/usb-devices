@@ -150,7 +150,9 @@ class USBDevice:
     def reset(self) -> bool:
         """Reset the USB device."""
         if ioctl is None:
-            _LOGGER.debug("Cannot reset %s: ioctl unavailable on this platform", self.id_str)
+            _LOGGER.debug(
+                "Cannot reset %s: ioctl unavailable on this platform", self.id_str
+            )
             return False  # type: ignore
         if self.usb_devfs_path is None:
             self.setup()
