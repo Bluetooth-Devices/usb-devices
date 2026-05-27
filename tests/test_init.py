@@ -250,3 +250,59 @@ def test_bluetooth_device_async_reset(
     dev.device_path = dev.path / "device"
     with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
         assert asyncio.run(dev.async_reset()) is True
+
+
+def test_usb_device_repr_unpopulated() -> None:
+    dev = USBDevice("1-1.2.2:1.0")
+    text = repr(dev)
+    assert "USBDevice" in text
+    assert "id_str='1-1.2.2:1.0'" in text
+    assert "vendor_id=None" in text
+    assert "product_id=None" in text
+    assert "manufacturer=None" in text
+    assert "product=None" in text
+
+
+def test_usb_device_repr_populated(tmp_path: Path) -> None:
+    _write_usb_sysfs(
+        tmp_path,
+        "1-1.2.2",
+        {
+            "manufacturer": "Realtek",
+            "product": "Bluetooth 5.1 Radio",
+            "idProduct": "a725",
+            "idVendor": "0bda",
+            "devnum": "11",
+        },
+    )
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.path = tmp_path / "1-1.2.2"
+    dev.setup()
+    text = repr(dev)
+    assert "vendor_id='0bda'" in text
+    assert "product_id='a725'" in text
+    assert "manufacturer='Realtek'" in text
+    assert "product='Bluetooth 5.1 Radio'" in text
+
+
+def test_bluetooth_device_repr_unset_usb_device() -> None:
+    dev = BluetoothDevice(2)
+    text = repr(dev)
+    assert "BluetoothDevice" in text
+    assert "hci=2" in text
+    assert "usb_device=None" in text
+
+
+@requires_symlinks
+def test_bluetooth_device_repr_with_usb_device(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bt_path, _ = _build_bt_tree(tmp_path, monkeypatch)
+    dev = BluetoothDevice(0)
+    dev.path = bt_path / "hci0"
+    dev.device_path = dev.path / "device"
+    dev.setup()
+    text = repr(dev)
+    assert "hci=0" in text
+    assert "USBDevice" in text
+    assert "id_str='1-1.2.2:1.0'" in text

@@ -61,6 +61,9 @@ class BluetoothDevice:
         self.usb_device = USBDevice(path.parts[-1])
         self.usb_device.setup()
 
+    def __repr__(self) -> str:
+        return f"<BluetoothDevice hci={self.hci} usb_device={self.usb_device!r}>"
+
 
 class USBDevice:
 
@@ -139,3 +142,10 @@ class USBDevice:
         assert self.usb_devfs_path is not None  # nosec
         with self.usb_devfs_path.open("w") as usb_dev:
             return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+
+    def __repr__(self) -> str:
+        return (
+            f"<USBDevice id_str={self.id_str!r} "
+            f"vendor_id={self.vendor_id!r} product_id={self.product_id!r} "
+            f"manufacturer={self.manufacturer!r} product={self.product!r}>"
+        )
