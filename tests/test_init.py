@@ -49,9 +49,7 @@ def test_usb_device_rejects_non_usb_id() -> None:
         USBDevice("1:1.0")  # no dash
 
 
-def _write_usb_sysfs(
-    tmp_path: Path, bus_port_id: str, files: dict[str, str]
-) -> Path:
+def _write_usb_sysfs(tmp_path: Path, bus_port_id: str, files: dict[str, str]) -> Path:
     dev_dir = tmp_path / bus_port_id
     dev_dir.mkdir(parents=True)
     for name, value in files.items():
