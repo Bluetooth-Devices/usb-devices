@@ -89,4 +89,3 @@
 ### Unknown
 
 * 0.0.1 ([`bb71f58`](https://github.com/Bluetooth-Devices/usb-devices/commit/bb71f589ddd01e4d7be0642d57c367845eee558e))
-
