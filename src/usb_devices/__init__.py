@@ -176,7 +176,5 @@ class USBDevice:
             with self.usb_devfs_path.open("w") as usb_dev:
                 return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
         except OSError as err:
-            _LOGGER.debug(
-                "USBDevice(%s) reset ioctl failed: %s", self.id_str, err
-            )
+            _LOGGER.debug("USBDevice(%s) reset ioctl failed: %s", self.id_str, err)
             return False
