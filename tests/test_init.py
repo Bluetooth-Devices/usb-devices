@@ -184,7 +184,7 @@ def test_usb_device_reset_returns_false_when_devfs_unreadable(
     def _deny_open(self: Path, *args: object, **kwargs: object) -> object:
         if self == dev.usb_devfs_path:
             raise PermissionError(13, "Permission denied")
-        return real_open(self, *args, **kwargs)  # type: ignore[arg-type]
+        return real_open(self, *args, **kwargs)  # type: ignore[call-overload]
 
     with patch.object(Path, "open", _deny_open), patch.object(
         usb_devices, "ioctl", lambda *a, **k: 0
