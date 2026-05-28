@@ -88,12 +88,19 @@ class USBDevice:
 
     def __init__(self, id_str: str) -> None:
         """Initialize a USBDevice object."""
-        if ":" not in id_str or "-" not in id_str:
+        # A valid sysfs id_str looks like ``1-1.2.2:1.0``: exactly one ``:``
+        # separating bus_port_id from interface_id, and bus_port_id itself
+        # contains exactly one ``-`` separating bus_id from port_id.
+        if id_str.count(":") != 1:
+            raise NotAUSBDeviceError(f"{id_str} is not a USB device")
+        bus_port_id, interface_id = id_str.split(":")
+        if bus_port_id.count("-") != 1 or not interface_id:
+            raise NotAUSBDeviceError(f"{id_str} is not a USB device")
+        bus_id, port_id = bus_port_id.split("-")
+        if not bus_id or not port_id:
             raise NotAUSBDeviceError(f"{id_str} is not a USB device")
         self.id_str = id_str  # 1-1.2.2:1.0
-        bus_port_id, interface_id = id_str.split(":")
         self.bus_port_id = bus_port_id
-        bus_id, port_id = bus_port_id.split("-")
         self.bus_id = bus_id
         self.port_id = port_id
         self.interface_id = interface_id
