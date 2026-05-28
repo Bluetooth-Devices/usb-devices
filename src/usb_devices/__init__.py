@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 import asyncio
 import logging
@@ -123,7 +123,13 @@ class USBDevice:
         _LOGGER.debug("Reading sysfs attributes for %s at %s", self.id_str, self.path)
         for key, value in self._files.items():
             try:
-                setattr(self, key, self.path.joinpath(value).read_text().strip())
+                setattr(
+                    self,
+                    key,
+                    self.path.joinpath(value)
+                    .read_text(encoding="utf-8", errors="replace")
+                    .strip(),
+                )
             except FileNotFoundError:
                 if key not in ("manufacturer", "product"):
                     raise

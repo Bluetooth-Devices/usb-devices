@@ -99,6 +99,44 @@ def test_usb_device_setup_missing_manufacturer_falls_back(tmp_path: Path) -> Non
     assert dev.product == "a725"
 
 
+def test_usb_device_setup_non_ascii_sysfs(tmp_path: Path) -> None:
+    """Manufacturer/product strings often contain non-ASCII bytes (USB string
+    descriptors are UTF-16 LE in the device; the kernel exposes them as UTF-8
+    in sysfs). read_text() must decode them as UTF-8 regardless of the
+    process locale (LANG=C / LC_ALL=C is common in containers)."""
+    dev_dir = tmp_path / "1-1.2.2"
+    dev_dir.mkdir(parents=True)
+    (dev_dir / "manufacturer").write_bytes("Mediatek µ\n".encode())
+    (dev_dir / "product").write_bytes("Bluetooth™ Radio\n".encode())
+    (dev_dir / "idProduct").write_text("a725\n")
+    (dev_dir / "idVendor").write_text("0bda\n")
+    (dev_dir / "devnum").write_text("11\n")
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.path = dev_dir
+    dev.setup()
+    assert dev.manufacturer == "Mediatek µ"
+    assert dev.product == "Bluetooth™ Radio"
+
+
+def test_usb_device_setup_invalid_utf8_replaced(tmp_path: Path) -> None:
+    """Invalid byte sequences in sysfs strings should not crash setup —
+    errors='replace' substitutes the replacement character so callers see
+    a degraded-but-usable string instead of an exception."""
+    dev_dir = tmp_path / "1-1.2.2"
+    dev_dir.mkdir(parents=True)
+    (dev_dir / "manufacturer").write_bytes(b"bad\xffbyte\n")
+    (dev_dir / "product").write_bytes(b"prod\xfe\n")
+    (dev_dir / "idProduct").write_text("a725\n")
+    (dev_dir / "idVendor").write_text("0bda\n")
+    (dev_dir / "devnum").write_text("11\n")
+    dev = USBDevice("1-1.2.2:1.0")
+    dev.path = dev_dir
+    dev.setup()
+    assert "bad" in dev.manufacturer  # type: ignore[operator]
+    assert "byte" in dev.manufacturer  # type: ignore[operator]
+    assert "prod" in dev.product  # type: ignore[operator]
+
+
 def test_usb_device_setup_missing_required_file_raises(tmp_path: Path) -> None:
     _write_usb_sysfs(
         tmp_path,
