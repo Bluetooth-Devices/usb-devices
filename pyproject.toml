@@ -78,6 +78,7 @@ pythonpath = ["src"]
 branch = true
 
 [tool.coverage.report]
+fail_under = 95
 exclude_lines = [
     "pragma: no cover",
     "@overload",
