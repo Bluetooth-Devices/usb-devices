@@ -61,6 +61,14 @@ class BluetoothDevice:
         self.usb_device = USBDevice(path.parts[-1])
         self.usb_device.setup()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BluetoothDevice):
+            return NotImplemented
+        return self.hci == other.hci
+
+    def __hash__(self) -> int:
+        return hash(("BluetoothDevice", self.hci))
+
 
 class USBDevice:
 
@@ -145,3 +153,11 @@ class USBDevice:
         assert self.usb_devfs_path is not None  # nosec
         with self.usb_devfs_path.open("w") as usb_dev:
             return ioctl(usb_dev, USBDEVFS_RESET, 0) > -1
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, USBDevice):
+            return NotImplemented
+        return self.id_str == other.id_str
+
+    def __hash__(self) -> int:
+        return hash(("USBDevice", self.id_str))

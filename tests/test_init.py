@@ -288,3 +288,59 @@ def test_bluetooth_device_async_reset(
     dev.device_path = dev.path / "device"
     with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
         assert asyncio.run(dev.async_reset()) is True
+
+
+def test_usb_device_equality_by_id_str() -> None:
+    a = USBDevice("1-1.2.2:1.0")
+    b = USBDevice("1-1.2.2:1.0")
+    c = USBDevice("1-1.2.3:1.0")
+    assert a == b
+    assert a != c
+    assert hash(a) == hash(b)
+    assert hash(a) != hash(c)
+
+
+def test_usb_device_not_equal_to_other_types() -> None:
+    a = USBDevice("1-1.2.2:1.0")
+    assert a != "1-1.2.2:1.0"
+    assert a != 0
+    assert a != BluetoothDevice(0)
+
+
+def test_usb_device_usable_in_set_and_dict() -> None:
+    a = USBDevice("1-1.2.2:1.0")
+    b = USBDevice("1-1.2.2:1.0")
+    c = USBDevice("1-1.2.3:1.0")
+    assert {a, b, c} == {a, c}
+    mapping: dict[USBDevice, str] = {a: "first"}
+    mapping[b] = "second"
+    assert mapping[a] == "second"
+    assert len(mapping) == 1
+
+
+def test_bluetooth_device_equality_by_hci() -> None:
+    a = BluetoothDevice(0)
+    b = BluetoothDevice(0)
+    c = BluetoothDevice(1)
+    assert a == b
+    assert a != c
+    assert hash(a) == hash(b)
+    assert hash(a) != hash(c)
+
+
+def test_bluetooth_device_not_equal_to_other_types() -> None:
+    a = BluetoothDevice(0)
+    assert a != 0
+    assert a != "hci0"
+    assert a != USBDevice("1-1.2.2:1.0")
+
+
+def test_bluetooth_device_usable_in_set_and_dict() -> None:
+    a = BluetoothDevice(0)
+    b = BluetoothDevice(0)
+    c = BluetoothDevice(1)
+    assert {a, b, c} == {a, c}
+    mapping: dict[BluetoothDevice, str] = {a: "first"}
+    mapping[b] = "second"
+    assert mapping[a] == "second"
+    assert len(mapping) == 1
