@@ -49,6 +49,25 @@ def test_usb_device_rejects_non_usb_id() -> None:
         USBDevice("1:1.0")  # no dash
 
 
+@pytest.mark.parametrize(
+    "malformed",
+    [
+        "a-b-c:d",  # two dashes in bus_port_id
+        ":-:",  # multiple colons
+        "1-1.2.2:1.0:foo",  # trailing colon segment
+        ":-",  # empty bus_port_id
+        "-:1.0",  # empty bus_id / port_id
+        "1-:1.0",  # empty port_id
+        "-1:1.0",  # empty bus_id
+        "1-1.2.2:",  # empty interface_id
+    ],
+)
+def test_usb_device_rejects_malformed_id_str(malformed: str) -> None:
+    """Malformed id_str values must raise NotAUSBDeviceError, not a raw ValueError."""
+    with pytest.raises(NotAUSBDeviceError):
+        USBDevice(malformed)
+
+
 def _write_usb_sysfs(tmp_path: Path, bus_port_id: str, files: dict[str, str]) -> Path:
     dev_dir = tmp_path / bus_port_id
     dev_dir.mkdir(parents=True)
