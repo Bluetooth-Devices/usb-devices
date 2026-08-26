@@ -262,6 +262,31 @@ def test_bluetooth_device_reset_calls_setup_when_needed(
     assert dev.usb_device is not None
 
 
+def test_bluetooth_device_reset_skips_setup_when_usb_device_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # When usb_device is already populated, reset() must NOT call setup()
+    # again — it should delegate straight to usb_device.reset(). We prove
+    # setup is skipped by pointing device_path at a non-existent location;
+    # any attempt to readlink it would raise FileNotFoundError.
+    monkeypatch.setattr(usb_devices, "USB_DEVICE_PATH", tmp_path)
+    devfs = tmp_path / "devfs" / "001"
+    devfs.mkdir(parents=True)
+    (devfs / "011").write_text("")
+    monkeypatch.setattr(usb_devices, "USB_DEVFS_PATH", tmp_path / "devfs")
+
+    inner = USBDevice("1-1.2.2:1.0")
+    inner.usb_devfs_path = devfs / "011"
+
+    dev = BluetoothDevice(0)
+    dev.device_path = tmp_path / "does-not-exist"
+    dev.usb_device = inner
+
+    with patch.object(usb_devices, "ioctl", lambda *a, **k: 0):
+        assert dev.reset() is True
+    assert dev.usb_device is inner
+
+
 @requires_symlinks
 def test_bluetooth_device_async_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
